@@ -221,7 +221,7 @@ async function checkAll(){
   const btnClear = $("btnClear");
   btn.disabled = true;
   btnClear.disabled = true;
-  $("results").innerHTML = '<tr><td colspan="4">Consultando tabelas de DNS locais...</td></tr>';
+  $("results").innerHTML = '<tr><td colspan="4">Aguardando...</td></tr>';
   setProgress(0, urls.length);
 
   const results = await runPool(urls, checkUrl, setProgress);
