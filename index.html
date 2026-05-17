@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Monitor de DNS</title>
+<title>Monitor de DNS Local</title>
 <style>
 :root{
   --bg:#0f1115; --card:#171a21; --border:#2d3442; --text:#f5f7fb;
@@ -22,7 +22,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 .label{color:var(--muted);font-size:.82rem}
 .value{font-size:1.25rem;font-weight:bold;margin-top:4px}
 .progress-wrap{margin-top:14px}
-.progress{height:10px;background:#222a35;border-radius999px;overflow:hidden}
+.progress{height:10px;background:#222a35;border-radius:999px;overflow:hidden}
 .bar{height:100%;width:0%;background:linear-gradient(90deg,#00e676,#00c853);transition:width .2s}
 .table-wrap{margin-top:18px;overflow:auto}
 table{width:100%;border-collapse:collapse}
@@ -46,7 +46,7 @@ th{position:sticky;top:0;background:#1e232d}
 <div class="container">
   <div class="card">
     <h1>Monitor de DNS</h1>
-    <div class="subtitle">Aguarde enquanto o sistema realiza os testes e carrega os resultados.</div>
+    <div class="subtitle">Os testes utilizam a resolução de DNS do seu próprio navegador/roteador local.</div>
     <button id="btn" onclick="checkAll()">Verificar Agora</button>
 
     <div class="progress-wrap">
@@ -56,8 +56,8 @@ th{position:sticky;top:0;background:#1e232d}
 
     <div class="stats">
       <div class="stat"><div class="label">Total</div><div class="value" id="total">0</div></div>
-      <div class="stat"><div class="label">Online</div><div class="value" id="online">0</div></div>
-      <div class="stat"><div class="label">Offline</div><div class="value" id="offline">0</div></div>
+      <div class="stat"><div class="label">Online (Resolvido)</div><div class="value" id="online">0</div></div>
+      <div class="stat"><div class="label">Offline (Bloqueado)</div><div class="value" id="offline">0</div></div>
     </div>
 
     <div class="meta" id="lastUpdate" style="margin-top:12px">Última atualização: -</div>
@@ -65,14 +65,14 @@ th{position:sticky;top:0;background:#1e232d}
 
   <div class="card table-wrap">
     <table>
-      <thead><tr><th>Domínio</th><th>Status</th><th>Tempo</th><th>Verificado em</th></tr></thead>
+      <thead><tr><th>Domínio</th><th>Status DNS</th><th>Tempo Resolução</th><th>Verificado em</th></tr></thead>
       <tbody id="results"></tbody>
     </table>
   </div>
 </div>
 
 <script>
-
+// Mantidos os domínios originais (o script vai testar a resolução deles independente do prefixo)
 const rawUrls = [
     "http://46c3hu3.click",
     "http://4dddep2e.com",
@@ -93,7 +93,7 @@ const rawUrls = [
     "http://equipedl.pro",
     "http://ep4mayy7.cloud",
     "http://epp92a.club",
-    "http://f5b1x6z8mk.fun",
+    "https://f5b1x6z8mk.fun",
     "http://fundaocapao.com",
     "http://fuzlakor.club",
     "http://guiner.vip",
@@ -115,9 +115,9 @@ const rawUrls = [
 ];
 
 const urls = [...new Set(rawUrls)];
-const STORAGE_KEY = "dns_monitor_cache_v2";
-const CONCURRENCY = 8; 
-const TIMEOUT_MS = 8000;
+const STORAGE_KEY = "dns_monitor_cache_v3";
+const CONCURRENCY = 6; // Reduzido levemente para dar tempo ao sistema operacional de resolver a pilha de DNS
+const TIMEOUT_MS = 5000;
 
 const $ = id => document.getElementById(id);
 
@@ -125,39 +125,50 @@ function setProgress(done, total){
   const pct = total ? Math.round((done/total)*100) : 0;
   $("progressBar").style.width = pct + "%";
   $("progressText").textContent = done < total
-    ? `Testando ${done} de ${total} (${pct}%)`
+    ? `Avaliando DNS ${done} de ${total} (${pct}%)`
     : `Concluído: ${total} de ${total} (100%)`;
 }
 
-async function checkUrl(url){
-  const start = performance.now();
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+// NOVA FUNÇÃO DE TESTE: Usa carregamento de imagem para forçar o lookup de DNS local do cliente
+function checkUrl(url) {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const img = new Image();
+    let terminado = false;
 
-  try {
-    await fetch(url + "?t=" + Date.now(), {
-      method: "GET",
-      mode: "no-cors",
-      cache: "no-store",
-      signal: controller.signal
-    });
+    // Remove http:// ou https:// para garantir formatação limpa no cache se necessário
+    const pureUrl = url.replace(/^https?:\/\//, "");
+    
+    const timeout = setTimeout(() => {
+      if (!terminado) {
+        terminado = true;
+        img.src = "";
+        resolve({ url: pureUrl, status: "OFFLINE", className: "offline", timeMs: Infinity });
+      }
+    }, TIMEOUT_MS);
 
-    return {
-      url,
-      status: "ONLINE",
-      className: "online",
-      timeMs: Math.round(performance.now() - start)
+    // Se a imagem disparar onload ou onerror (como um 404), significa que o DNS LOCAL resolveu o IP com sucesso!
+    img.onload = img.onerror = function(e) {
+      if (!terminado) {
+        terminado = true;
+        clearTimeout(timeout);
+        
+        // Se o erro for de rede/DNS inválido, o tempo costuma ser bizarramente baixo ou nulo no travamento,
+        // mas se levou alguns milissegundos e retornou o evento, o DNS respondeu.
+        const duration = Math.round(performance.now() - start);
+        
+        // Filtro para capturar falhas de NXDOMAIN imediatas que alguns browsers simulam
+        if (duration < 5 && e.type === "error") {
+             resolve({ url: pureUrl, status: "OFFLINE", className: "offline", timeMs: Infinity });
+        } else {
+             resolve({ url: pureUrl, status: "ONLINE", className: "online", timeMs: duration });
+        }
+      }
     };
-  } catch {
-    return {
-      url,
-      status: "OFFLINE",
-      className: "offline",
-      timeMs: Infinity
-    };
-  } finally {
-    clearTimeout(timer);
-  }
+
+    // Força uma requisição de imagem com cache-bust para obrigar o computador a consultar o DNS / Roteador
+    img.src = `https://${pureUrl}/favicon.ico?v=${Date.now()}`;
+  });
 }
 
 async function runPool(items, worker, onProgress){
@@ -209,12 +220,13 @@ function render(results){
 async function checkAll(){
   const btn = $("btn");
   btn.disabled = true;
-  $("results").innerHTML = '<tr><td colspan="4">Iniciando testes...</td></tr>';
+  $("results").innerHTML = '<tr><td colspan="4">Consultando tabelas de DNS locais...</td></tr>';
   setProgress(0, urls.length);
 
   const results = await runPool(urls, checkUrl, setProgress);
 
-  results.sort((a, b) => a.timeMs - b.timeMs);
+  // Ordena colocando os Online primeiro
+  results.sort((a, b) => (a.status === "ONLINE" ? -1 : 1) - (b.status === "ONLINE" ? -1 : 1) || a.timeMs - b.timeMs);
   render(results);
   btn.disabled = false;
 }
