@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Monitor de DNS Local</title>
+<title>Monitor de DNS</title>
 <style>
 :root{
   --bg:#0f1115; --card:#171a21; --border:#2d3442; --text:#f5f7fb;
@@ -15,7 +15,12 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(
 .card{background:rgba(23,26,33,.95);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 h1{margin:0 0 8px;color:var(--green);font-size:clamp(1.4rem,4vw,2.2rem)}
 .subtitle,.meta{color:var(--muted);font-size:.92rem}
-button{margin-top:14px;border:none;background:#00c853;color:#fff;padding:12px 18px;border-radius:12px;font-weight:bold;cursor:pointer}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button{border:none;color:#fff;padding:12px 18px;border-radius:12px;font-weight:bold;cursor:pointer;transition:background 0.2s}
+.btn-primary{background:#00c853}
+.btn-primary:hover{background:#00b24a}
+.btn-secondary{background:#374151}
+.btn-secondary:hover{background:#4b5563}
 button:disabled{opacity:.6;cursor:not-allowed}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:16px}
 .stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
@@ -47,7 +52,11 @@ th{position:sticky;top:0;background:#1e232d}
   <div class="card">
     <h1>Monitor de DNS</h1>
     <div class="subtitle">Os testes utilizam a resolução de DNS do seu próprio navegador/roteador local.</div>
-    <button id="btn" onclick="checkAll()">Verificar Agora</button>
+    
+    <div class="btn-group">
+      <button id="btn" class="btn-primary" onclick="checkAll()">Verificar Agora</button>
+      <button id="btnClear" class="btn-secondary" onclick="clearCache()">Limpar Cache</button>
+    </div>
 
     <div class="progress-wrap">
       <div class="meta" id="progressText">Aguardando...</div>
@@ -72,7 +81,6 @@ th{position:sticky;top:0;background:#1e232d}
 </div>
 
 <script>
-// Mantidos os domínios originais (o script vai testar a resolução deles independente do prefixo)
 const rawUrls = [
     "http://46c3hu3.click",
     "http://4dddep2e.com",
@@ -116,7 +124,7 @@ const rawUrls = [
 
 const urls = [...new Set(rawUrls)];
 const STORAGE_KEY = "dns_monitor_cache_v3";
-const CONCURRENCY = 6; // Reduzido levemente para dar tempo ao sistema operacional de resolver a pilha de DNS
+const CONCURRENCY = 6; 
 const TIMEOUT_MS = 5000;
 
 const $ = id => document.getElementById(id);
@@ -129,14 +137,11 @@ function setProgress(done, total){
     : `Concluído: ${total} de ${total} (100%)`;
 }
 
-// NOVA FUNÇÃO DE TESTE: Usa carregamento de imagem para forçar o lookup de DNS local do cliente
 function checkUrl(url) {
   return new Promise((resolve) => {
     const start = performance.now();
     const img = new Image();
     let terminado = false;
-
-    // Remove http:// ou https:// para garantir formatação limpa no cache se necessário
     const pureUrl = url.replace(/^https?:\/\//, "");
     
     const timeout = setTimeout(() => {
@@ -147,17 +152,12 @@ function checkUrl(url) {
       }
     }, TIMEOUT_MS);
 
-    // Se a imagem disparar onload ou onerror (como um 404), significa que o DNS LOCAL resolveu o IP com sucesso!
     img.onload = img.onerror = function(e) {
       if (!terminado) {
         terminado = true;
         clearTimeout(timeout);
-        
-        // Se o erro for de rede/DNS inválido, o tempo costuma ser bizarramente baixo ou nulo no travamento,
-        // mas se levou alguns milissegundos e retornou o evento, o DNS respondeu.
         const duration = Math.round(performance.now() - start);
         
-        // Filtro para capturar falhas de NXDOMAIN imediatas que alguns browsers simulam
         if (duration < 5 && e.type === "error") {
              resolve({ url: pureUrl, status: "OFFLINE", className: "offline", timeMs: Infinity });
         } else {
@@ -166,7 +166,6 @@ function checkUrl(url) {
       }
     };
 
-    // Força uma requisição de imagem com cache-bust para obrigar o computador a consultar o DNS / Roteador
     img.src = `https://${pureUrl}/favicon.ico?v=${Date.now()}`;
   });
 }
@@ -219,16 +218,33 @@ function render(results){
 
 async function checkAll(){
   const btn = $("btn");
+  const btnClear = $("btnClear");
   btn.disabled = true;
+  btnClear.disabled = true;
   $("results").innerHTML = '<tr><td colspan="4">Consultando tabelas de DNS locais...</td></tr>';
   setProgress(0, urls.length);
 
   const results = await runPool(urls, checkUrl, setProgress);
 
-  // Ordena colocando os Online primeiro
   results.sort((a, b) => (a.status === "ONLINE" ? -1 : 1) - (b.status === "ONLINE" ? -1 : 1) || a.timeMs - b.timeMs);
   render(results);
   btn.disabled = false;
+  btnClear.disabled = false;
+}
+
+// NOVA FUNÇÃO: Limpa o armazenamento e reinicia a tela
+function clearCache() {
+  localStorage.removeItem(STORAGE_KEY);
+  $("total").textContent = "0";
+  $("online").textContent = "0";
+  $("offline").textContent = "0";
+  $("lastUpdate").textContent = "Cache limpo. Aguardando novo teste...";
+  $("results").innerHTML = "";
+  $("progressBar").style.width = "0%";
+  $("progressText").textContent = "Aguardando...";
+  
+  // Roda o teste novamente de forma limpa
+  checkAll();
 }
 
 function restoreCache(){
@@ -248,8 +264,10 @@ function restoreCache(){
 
 window.addEventListener("load", () => {
   restoreCache();
-  checkAll();
-  setInterval(checkAll, 24 * 60 * 60 * 1000);
+  // Só dispara automaticamente se não houver cache salvo
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    checkAll();
+  }
 });
 </script>
 </body>
