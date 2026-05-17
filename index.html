@@ -234,17 +234,21 @@ async function checkAll(){
 
 // NOVA FUNÇÃO: Limpa o armazenamento e reinicia a tela
 function clearCache() {
-  localStorage.removeItem(STORAGE_KEY);
+  // Limpa absolutamente todo o armazenamento local atrelado ao site
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  // Zera a interface visual
   $("total").textContent = "0";
   $("online").textContent = "0";
   $("offline").textContent = "0";
-  $("lastUpdate").textContent = "Cache limpo. Aguardando novo teste...";
+  $("lastUpdate").textContent = "Cache e dados locais totalmente limpos!";
   $("results").innerHTML = "";
   $("progressBar").style.width = "0%";
   $("progressText").textContent = "Aguardando...";
   
-  // Roda o teste novamente de forma limpa
-  checkAll();
+  // Força o recarregamento da página limpando o cache do navegador
+  window.location.reload(true);
 }
 
 function restoreCache(){
