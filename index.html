@@ -22,7 +22,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 .label{color:var(--muted);font-size:.82rem}
 .value{font-size:1.25rem;font-weight:bold;margin-top:4px}
 .progress-wrap{margin-top:14px}
-.progress{height:10px;background:#222a35;border-radius:999px;overflow:hidden}
+.progress{height:10px;background:#222a35;border-radius999px;overflow:hidden}
 .bar{height:100%;width:0%;background:linear-gradient(90deg,#00e676,#00c853);transition:width .2s}
 .table-wrap{margin-top:18px;overflow:auto}
 table{width:100%;border-collapse:collapse}
@@ -41,13 +41,6 @@ th{position:sticky;top:0;background:#1e232d}
   td::before{content:attr(data-label);color:var(--muted);font-weight:bold;text-align:left}
 }
 </style>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#00c853">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="DNS Monitor">
-
 </head>
 <body>
 <div class="container">
@@ -79,51 +72,51 @@ th{position:sticky;top:0;background:#1e232d}
 </div>
 
 <script>
-// Substitua ou acrescente seus domínios aqui.
+// Lista alterada para HTTPS para evitar bloqueio por Conteúdo Misto (Mixed Content) no GitHub Pages
 const rawUrls = [
-    "http://46c3hu3.click",
-    "http://4dddep2e.com",
-    "http://4t75eg.cloud",
-    "http://4wpztc.cc",
-    "http://741520.vip",
-    "http://78y8945.club",
-    "http://8yca8t.live",
-    "http://acmu253.skin",
-    "http://b5erahn.cc",
-    "http://bdsword.com",
-    "http://bsaganss.vip",
-    "http://clubthief.me",
-    "http://conectsup.com",
-    "http://diogoguido.com",
-    "http://djs4t.cc",
-    "http://doctorclub25.com",
-    "http://equipedl.pro",
-    "http://ep4mayy7.cloud",
-    "http://epp92a.club",
-    "http://f5b1x6z8mk.fun",
-    "http://fundaocapao.com",
-    "http://fuzlakor.club",
-    "http://guiner.vip",
-    "http://hah9xx.io",
-    "http://imperiohd.net",
-    "http://interblack.pro",
-    "http://ltvpriva.club",
-    "http://misterclub25.com",
-    "http://muqq7yzqaz.com",
-    "http://nymcsus.autos",
-    "http://ocvtab.info",
-    "http://phn35.xyz",
-    "http://psrlt.com",
-    "http://roscoe.club",
-    "http://taw6zvc.cloud",
-    "http://trollcaze.biz",
-    "http://uabckiac.com",
-    "http://ueropqe.com"
+    "https://46c3hu3.click",
+    "https://4dddep2e.com",
+    "https://4t75eg.cloud",
+    "https://4wpztc.cc",
+    "https://741520.vip",
+    "https://78y8945.club",
+    "https://8yca8t.live",
+    "https://acmu253.skin",
+    "https://b5erahn.cc",
+    "https://bdsword.com",
+    "https://bsaganss.vip",
+    "https://clubthief.me",
+    "https://conectsup.com",
+    "https://diogoguido.com",
+    "https://djs4t.cc",
+    "https://doctorclub25.com",
+    "https://equipedl.pro",
+    "https://ep4mayy7.cloud",
+    "https://epp92a.club",
+    "https://f5b1x6z8mk.fun",
+    "https://fundaocapao.com",
+    "https://fuzlakor.club",
+    "https://guiner.vip",
+    "https://hah9xx.io",
+    "https://imperiohd.net",
+    "https://interblack.pro",
+    "https://ltvpriva.club",
+    "https://misterclub25.com",
+    "https://muqq7yzqaz.com",
+    "https://nymcsus.autos",
+    "https://ocvtab.info",
+    "https://phn35.xyz",
+    "https://psrlt.com",
+    "https://roscoe.club",
+    "https://taw6zvc.cloud",
+    "https://trollcaze.biz",
+    "https://uabckiac.com",
+    "https://ueropqe.com"
 ];
 
 const urls = [...new Set(rawUrls)];
 const STORAGE_KEY = "dns_monitor_cache_v2";
-const CONCURRENCY = 8; // quantos testes simultâneos
+const CONCURRENCY = 8; 
 const TIMEOUT_MS = 8000;
 
 const $ = id => document.getElementById(id);
@@ -247,14 +240,5 @@ window.addEventListener("load", () => {
   setInterval(checkAll, 24 * 60 * 60 * 1000);
 });
 </script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js');
-  });
-}
-</script>
-
 </body>
 </html>
