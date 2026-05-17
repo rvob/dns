@@ -221,7 +221,7 @@ async function checkAll(){
   const btnClear = $("btnClear");
   btn.disabled = true;
   btnClear.disabled = true;
-  $("results").innerHTML = '<tr><td colspan="4">Aguardando...</td></tr>';
+  $("results").innerHTML = '<tr><td colspan="4">Realizando testes, aguarde...</td></tr>';
   setProgress(0, urls.length);
 
   const results = await runPool(urls, checkUrl, setProgress);
@@ -245,7 +245,7 @@ function clearCache() {
   $("lastUpdate").textContent = "Cache e dados locais totalmente limpos!";
   $("results").innerHTML = "";
   $("progressBar").style.width = "0%";
-  $("progressText").textContent = "Aguardando...";
+  $("progressText").textContent = "Realizando testes, aguarde...";
   
   // Força o recarregamento da página limpando o cache do navegador
   window.location.reload(true);
