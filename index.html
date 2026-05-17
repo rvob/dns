@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Monitor de DNS</title>
+<style>
+:root{
+  --bg:#0f1115; --card:#171a21; --border:#2d3442; --text:#f5f7fb;
+  --muted:#9aa4b2; --green:#00e676; --red:#ff5252; --orange:#ffb300;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#0b0d11,#121722);color:var(--text);padding:16px}
+.container{max-width:1100px;margin:auto}
+.card{background:rgba(23,26,33,.95);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+h1{margin:0 0 8px;color:var(--green);font-size:clamp(1.4rem,4vw,2.2rem)}
+.subtitle,.meta{color:var(--muted);font-size:.92rem}
+button{margin-top:14px;border:none;background:#00c853;color:#fff;padding:12px 18px;border-radius:12px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:16px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
+.label{color:var(--muted);font-size:.82rem}
+.value{font-size:1.25rem;font-weight:bold;margin-top:4px}
+.progress-wrap{margin-top:14px}
+.progress{height:10px;background:#222a35;border-radius:999px;overflow:hidden}
+.bar{height:100%;width:0%;background:linear-gradient(90deg,#00e676,#00c853);transition:width .2s}
+.table-wrap{margin-top:18px;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left}
+th{position:sticky;top:0;background:#1e232d}
+.online{color:var(--green);font-weight:bold}
+.offline{color:var(--red);font-weight:bold}
+.domain{word-break:break-all}
+@media (max-width:768px){
+  body{padding:10px}
+  table,thead,tbody,tr,td{display:block;width:100%}
+  thead{display:none}
+  tbody{display:grid;gap:10px}
+  tr{background:rgba(23,26,33,.95);border:1px solid var(--border);border-radius:12px;padding:6px 0}
+  td{display:flex;justify-content:space-between;border:none;padding:8px 12px;gap:10px;text-align:right}
+  td::before{content:attr(data-label);color:var(--muted);font-weight:bold;text-align:left}
+}
+</style>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00c853">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DNS Monitor">
+
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <h1>Monitor de DNS</h1>
+    <div class="subtitle">Aguarde enquanto o sistema realiza os testes e carrega os resultados.</div>
+    <button id="btn" onclick="checkAll()">Verificar Agora</button>
+
+    <div class="progress-wrap">
+      <div class="meta" id="progressText">Aguardando...</div>
+      <div class="progress"><div class="bar" id="progressBar"></div></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="label">Total</div><div class="value" id="total">0</div></div>
+      <div class="stat"><div class="label">Online</div><div class="value" id="online">0</div></div>
+      <div class="stat"><div class="label">Offline</div><div class="value" id="offline">0</div></div>
+    </div>
+
+    <div class="meta" id="lastUpdate" style="margin-top:12px">Última atualização: -</div>
+  </div>
+
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Domínio</th><th>Status</th><th>Tempo</th><th>Verificado em</th></tr></thead>
+      <tbody id="results"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Substitua ou acrescente seus domínios aqui.
+const rawUrls = [
+    "http://46c3hu3.click",
+    "http://4dddep2e.com",
+    "http://4t75eg.cloud",
+    "http://4wpztc.cc",
+    "http://741520.vip",
+    "http://78y8945.club",
+    "http://8yca8t.live",
+    "http://acmu253.skin",
+    "http://b5erahn.cc",
+    "http://bdsword.com",
+    "http://bsaganss.vip",
+    "http://clubthief.me",
+    "http://conectsup.com",
+    "http://diogoguido.com",
+    "http://djs4t.cc",
+    "http://doctorclub25.com",
+    "http://equipedl.pro",
+    "http://ep4mayy7.cloud",
+    "http://epp92a.club",
+    "http://f5b1x6z8mk.fun",
+    "http://fundaocapao.com",
+    "http://fuzlakor.club",
+    "http://guiner.vip",
+    "http://hah9xx.io",
+    "http://imperiohd.net",
+    "http://interblack.pro",
+    "http://ltvpriva.club",
+    "http://misterclub25.com",
+    "http://muqq7yzqaz.com",
+    "http://nymcsus.autos",
+    "http://ocvtab.info",
+    "http://phn35.xyz",
+    "http://psrlt.com",
+    "http://roscoe.club",
+    "http://taw6zvc.cloud",
+    "http://trollcaze.biz",
+    "http://uabckiac.com",
+    "http://ueropqe.com"
+];
+
+const urls = [...new Set(rawUrls)];
+const STORAGE_KEY = "dns_monitor_cache_v2";
+const CONCURRENCY = 8; // quantos testes simultâneos
+const TIMEOUT_MS = 8000;
+
+const $ = id => document.getElementById(id);
+
+function setProgress(done, total){
+  const pct = total ? Math.round((done/total)*100) : 0;
+  $("progressBar").style.width = pct + "%";
+  $("progressText").textContent = done < total
+    ? `Testando ${done} de ${total} (${pct}%)`
+    : `Concluído: ${total} de ${total} (100%)`;
+}
+
+async function checkUrl(url){
+  const start = performance.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    await fetch(url + "?t=" + Date.now(), {
+      method: "GET",
+      mode: "no-cors",
+      cache: "no-store",
+      signal: controller.signal
+    });
+
+    return {
+      url,
+      status: "ONLINE",
+      className: "online",
+      timeMs: Math.round(performance.now() - start)
+    };
+  } catch {
+    return {
+      url,
+      status: "OFFLINE",
+      className: "offline",
+      timeMs: Infinity
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function runPool(items, worker, onProgress){
+  const results = new Array(items.length);
+  let index = 0, done = 0;
+
+  async function runner(){
+    while (true){
+      const current = index++;
+      if (current >= items.length) break;
+      results[current] = await worker(items[current]);
+      done++;
+      onProgress(done, items.length);
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(CONCURRENCY, items.length) },
+    () => runner()
+  );
+
+  await Promise.all(workers);
+  return results;
+}
+
+function render(results){
+  const now = new Date().toLocaleString("pt-BR");
+  $("results").innerHTML = results.map(r => `
+    <tr>
+      <td data-label="Domínio"><span class="domain">${r.url}</span></td>
+      <td data-label="Status"><span class="${r.className}">${r.status}</span></td>
+      <td data-label="Tempo">${Number.isFinite(r.timeMs) ? r.timeMs + " ms" : "-"}</td>
+      <td data-label="Verificado em">${now}</td>
+    </tr>
+  `).join("");
+
+  const online = results.filter(r => r.status === "ONLINE").length;
+  $("total").textContent = results.length;
+  $("online").textContent = online;
+  $("offline").textContent = results.length - online;
+  $("lastUpdate").textContent = "Última atualização: " + now;
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    results,
+    lastUpdate: now
+  }));
+}
+
+async function checkAll(){
+  const btn = $("btn");
+  btn.disabled = true;
+  $("results").innerHTML = '<tr><td colspan="4">Iniciando testes...</td></tr>';
+  setProgress(0, urls.length);
+
+  const results = await runPool(urls, checkUrl, setProgress);
+
+  results.sort((a, b) => a.timeMs - b.timeMs);
+  render(results);
+  btn.disabled = false;
+}
+
+function restoreCache(){
+  try{
+    const cache = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    if (cache?.results?.length){
+      render(cache.results);
+      $("lastUpdate").textContent = "Última atualização: " + cache.lastUpdate;
+      setProgress(cache.results.length, cache.results.length);
+    } else {
+      $("total").textContent = urls.length;
+    }
+  } catch {
+    $("total").textContent = urls.length;
+  }
+}
+
+window.addEventListener("load", () => {
+  restoreCache();
+  checkAll();
+  setInterval(checkAll, 24 * 60 * 60 * 1000);
+});
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js');
+  });
+}
+</script>
+
+</body>
+</html>
