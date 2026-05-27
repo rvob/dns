@@ -4,19 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Monitor de DNS</title>
+<title>Monitor Lite PRO</title>
 
 <style>
 
 :root{
-  --bg:#0f1115;
-  --card:#171a21;
-  --border:#2d3442;
-  --text:#f5f7fb;
-  --muted:#9aa4b2;
-  --green:#00e676;
-  --red:#ff5252;
-  --orange:#ffb300;
+  --bg:#0d1117;
+  --panel:#161b22;
+  --border:#30363d;
+  --text:#e6edf3;
+  --muted:#8b949e;
+  --green:#3fb950;
+  --red:#f85149;
+  --yellow:#d29922;
 }
 
 *{
@@ -25,10 +25,10 @@
 
 body{
   margin:0;
-  padding:16px;
-  background:linear-gradient(180deg,#0b0d11,#121722);
+  background:var(--bg);
   color:var(--text);
-  font-family:Arial,Helvetica,sans-serif;
+  font-family:Consolas,monospace;
+  padding:20px;
 }
 
 .container{
@@ -36,40 +36,31 @@ body{
   margin:auto;
 }
 
-.card{
-  background:rgba(23,26,33,.96);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:18px;
-  box-shadow:0 10px 30px rgba(0,0,0,.35);
-}
-
-h1{
-  margin:0 0 10px;
-  color:var(--green);
-  font-size:clamp(1.4rem,4vw,2.2rem);
-}
-
-.subtitle{
-  color:var(--muted);
-  margin-bottom:14px;
-}
-
-.btn-group{
+.topbar{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  margin-top:14px;
+  align-items:center;
+  margin-bottom:15px;
 }
 
 button{
   border:none;
-  border-radius:12px;
-  padding:12px 18px;
-  font-weight:bold;
+  background:var(--green);
   color:#fff;
+  padding:10px 16px;
+  border-radius:8px;
   cursor:pointer;
-  transition:.2s;
+  font-weight:bold;
+  font-family:inherit;
+}
+
+button:hover{
+  opacity:.9;
+}
+
+button.secondary{
+  background:#30363d;
 }
 
 button:disabled{
@@ -77,91 +68,62 @@ button:disabled{
   cursor:not-allowed;
 }
 
-.btn-primary{
-  background:#00c853;
-}
-
-.btn-primary:hover{
-  background:#00b24a;
-}
-
-.btn-secondary{
-  background:#374151;
-}
-
-.btn-secondary:hover{
-  background:#4b5563;
-}
-
-.progress-wrap{
-  margin-top:16px;
-}
-
-.meta{
+.stats{
+  display:flex;
+  gap:20px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
   color:var(--muted);
-  font-size:.92rem;
-  margin-bottom:8px;
+}
+
+.stats b{
+  color:var(--text);
 }
 
 .progress{
-  height:10px;
-  background:#202733;
+  width:100%;
+  height:8px;
+  background:#21262d;
   border-radius:999px;
   overflow:hidden;
+  margin-bottom:20px;
 }
 
 .bar{
   height:100%;
   width:0%;
-  background:linear-gradient(90deg,#00e676,#00c853);
-  transition:width .2s;
-}
-
-.stats{
-  margin-top:18px;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-  gap:12px;
-}
-
-.stat{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:12px;
-}
-
-.label{
-  color:var(--muted);
-  font-size:.85rem;
-}
-
-.value{
-  margin-top:5px;
-  font-size:1.4rem;
-  font-weight:bold;
+  background:var(--green);
+  transition:.2s;
 }
 
 .table-wrap{
-  margin-top:20px;
   overflow:auto;
+  border:1px solid var(--border);
+  border-radius:10px;
 }
 
 table{
   width:100%;
   border-collapse:collapse;
-}
-
-th,td{
-  padding:12px;
-  border-bottom:1px solid var(--border);
-  text-align:left;
+  min-width:700px;
 }
 
 th{
-  background:#1e232d;
-  position:sticky;
-  top:0;
+  background:#161b22;
+  color:var(--muted);
+  font-weight:normal;
+  text-align:left;
+  padding:14px;
+  border-bottom:1px solid var(--border);
+}
+
+td{
+  padding:12px 14px;
+  border-bottom:1px solid #21262d;
+}
+
+tr:hover{
+  background:#161b22;
 }
 
 .online{
@@ -174,48 +136,24 @@ th{
   font-weight:bold;
 }
 
-.protocol{
-  color:var(--orange);
+.testing{
+  color:var(--yellow);
 }
 
 .domain{
   word-break:break-all;
 }
 
+.footer{
+  margin-top:15px;
+  color:var(--muted);
+  font-size:.9rem;
+}
+
 @media(max-width:768px){
 
-  table,thead,tbody,tr,td{
-    display:block;
-    width:100%;
-  }
-
-  thead{
-    display:none;
-  }
-
-  tbody{
-    display:grid;
-    gap:10px;
-  }
-
-  tr{
-    background:#171a21;
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:8px 0;
-  }
-
-  td{
-    border:none;
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-  }
-
-  td::before{
-    content:attr(data-label);
-    color:var(--muted);
-    font-weight:bold;
+  body{
+    padding:10px;
   }
 
 }
@@ -226,81 +164,54 @@ th{
 
 <div class="container">
 
-  <div class="card">
+  <div class="topbar">
 
-    <h1>Monitor de DNS</h1>
+    <button id="btnCheck">
+      Verificar Agora
+    </button>
 
-    <div class="subtitle">
-      Os testes são feitos usando a internet e DNS do próprio usuário conectado.
-    </div>
-
-    <div class="btn-group">
-
-      <button id="btnCheck" class="btn-primary">
-        Verificar Agora
-      </button>
-
-      <button id="btnClear" class="btn-secondary">
-        Limpar Cache
-      </button>
-
-    </div>
-
-    <div class="progress-wrap">
-
-      <div class="meta" id="progressText">
-        Aguardando verificação...
-      </div>
-
-      <div class="progress">
-        <div class="bar" id="progressBar"></div>
-      </div>
-
-    </div>
-
-    <div class="stats">
-
-      <div class="stat">
-        <div class="label">Total</div>
-        <div class="value" id="total">0</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">Online</div>
-        <div class="value" id="online">0</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">Offline</div>
-        <div class="value" id="offline">0</div>
-      </div>
-
-    </div>
-
-    <div class="meta" id="lastUpdate" style="margin-top:14px">
-      Última atualização: -
-    </div>
+    <button id="btnClear" class="secondary">
+      Limpar Cache
+    </button>
 
   </div>
 
-  <div class="card table-wrap">
+  <div class="stats">
+
+    <div>Total: <b id="total">0</b></div>
+
+    <div>Online: <b id="online">0</b></div>
+
+    <div>Offline: <b id="offline">0</b></div>
+
+    <div id="statusText">Aguardando...</div>
+
+  </div>
+
+  <div class="progress">
+    <div class="bar" id="bar"></div>
+  </div>
+
+  <div class="table-wrap">
 
     <table>
 
       <thead>
         <tr>
-          <th>Domínio</th>
-          <th>Status</th>
-          <th>Protocolo</th>
-          <th>Tempo</th>
-          <th>Verificado em</th>
+          <th>DOMÍNIO</th>
+          <th>STATUS</th>
+          <th>TEMPO</th>
         </tr>
       </thead>
 
-      <tbody id="results"></tbody>
+      <tbody id="tbody"></tbody>
 
     </table>
 
+  </div>
+
+  <div class="footer" id="footer">
+    Última atualização: -
   </div>
 
 </div>
@@ -323,31 +234,83 @@ const urls = [
 
 ];
 
-const STORAGE_KEY = "monitor_cache_v7";
-
-const TIMEOUT_MS = 6000;
+const TIMEOUT = 6000;
 
 const CONCURRENCY = 5;
 
-const $ = id => document.getElementById(id);
+const STORAGE_KEY = "monitor_lite_pro_v3";
 
-function updateProgress(done,total){
+const tbody = document.getElementById("tbody");
 
-  const percent = total
-    ? Math.round((done / total) * 100)
-    : 0;
+const bar = document.getElementById("bar");
 
-  $("progressBar").style.width =
-    percent + "%";
+const totalEl = document.getElementById("total");
 
-  $("progressText").textContent =
-    done < total
-      ? `Verificando ${done} de ${total} (${percent}%)`
-      : `Concluído (${total})`;
+const onlineEl = document.getElementById("online");
+
+const offlineEl = document.getElementById("offline");
+
+const footer = document.getElementById("footer");
+
+const statusText = document.getElementById("statusText");
+
+const btnCheck = document.getElementById("btnCheck");
+
+const btnClear = document.getElementById("btnClear");
+
+function renderInitial(){
+
+  tbody.innerHTML = urls.map(domain => `
+
+    <tr id="row-${domain}">
+
+      <td class="domain">
+        http://${domain}
+      </td>
+
+      <td class="testing">
+        TESTANDO...
+      </td>
+
+      <td>
+        -
+      </td>
+
+    </tr>
+
+  `).join("");
+
+  totalEl.textContent = urls.length;
 
 }
 
-function testImage(url){
+function updateStats(results){
+
+  const online =
+    results.filter(r => r.status === "ONLINE").length;
+
+  const offline =
+    results.filter(r => r.status === "OFFLINE").length;
+
+  onlineEl.textContent = online;
+
+  offlineEl.textContent = offline;
+
+}
+
+function updateProgress(done,total){
+
+  const percent =
+    Math.round((done / total) * 100);
+
+  bar.style.width = percent + "%";
+
+  statusText.textContent =
+    `Verificando ${done}/${total} (${percent}%)`;
+
+}
+
+function testSite(domain){
 
   return new Promise(resolve => {
 
@@ -366,10 +329,10 @@ function testImage(url){
       img.src = "";
 
       resolve({
-        success:false
+        online:false
       });
 
-    }, TIMEOUT_MS);
+    }, TIMEOUT);
 
     img.onload = () => {
 
@@ -381,7 +344,7 @@ function testImage(url){
 
       resolve({
 
-        success:true,
+        online:true,
 
         time:Math.round(
           performance.now() - start
@@ -399,9 +362,14 @@ function testImage(url){
 
       clearTimeout(timeout);
 
+      /*
+        erro significa:
+        servidor respondeu
+      */
+
       resolve({
 
-        success:true,
+        online:true,
 
         time:Math.round(
           performance.now() - start
@@ -412,7 +380,8 @@ function testImage(url){
     };
 
     img.src =
-      url +
+      "http://" +
+      domain +
       "/favicon.ico?_=" +
       Date.now();
 
@@ -420,47 +389,20 @@ function testImage(url){
 
 }
 
-async function checkUrl(domain){
+async function checkDomain(domain){
 
-  const https = await testImage(
-    "https://" + domain
-  );
+  const result =
+    await testSite(domain);
 
-  if(https.success){
-
-    return {
-
-      url:domain,
-
-      status:"ONLINE",
-
-      protocol:"HTTPS",
-
-      className:"online",
-
-      timeMs:https.time
-
-    };
-
-  }
-
-  const http = await testImage(
-    "http://" + domain
-  );
-
-  if(http.success){
+  if(result.online){
 
     return {
 
-      url:domain,
+      domain:"http://" + domain,
 
       status:"ONLINE",
 
-      protocol:"HTTP",
-
-      className:"online",
-
-      timeMs:http.time
+      time:result.time
 
     };
 
@@ -468,250 +410,232 @@ async function checkUrl(domain){
 
   return {
 
-    url:domain,
+    domain:"http://" + domain,
 
     status:"OFFLINE",
 
-    protocol:"-",
-
-    className:"offline",
-
-    timeMs:Infinity
+    time:"-"
 
   };
 
 }
 
-async function runPool(items,worker,onProgress){
+function updateRow(result){
 
-  const results = new Array(items.length);
+  const row =
+    document.getElementById(
+      "row-" +
+      result.domain.replace("http://","")
+    );
 
-  let index = 0;
+  if(!row) return;
+
+  row.innerHTML = `
+
+    <td class="domain">
+      ${result.domain}
+    </td>
+
+    <td class="${
+      result.status === "ONLINE"
+      ? "online"
+      : "offline"
+    }">
+      ${result.status}
+    </td>
+
+    <td>
+      ${
+        result.time === "-"
+        ? "-"
+        : result.time + " ms"
+      }
+    </td>
+
+  `;
+
+}
+
+function renderSorted(results){
+
+  tbody.innerHTML = "";
+
+  results.forEach(result => {
+
+    tbody.innerHTML += `
+
+      <tr>
+
+        <td class="domain">
+          ${result.domain}
+        </td>
+
+        <td class="${
+          result.status === "ONLINE"
+          ? "online"
+          : "offline"
+        }">
+          ${result.status}
+        </td>
+
+        <td>
+          ${
+            result.time === "-"
+            ? "-"
+            : result.time + " ms"
+          }
+        </td>
+
+      </tr>
+
+    `;
+
+  });
+
+}
+
+async function runChecks(){
+
+  btnCheck.disabled = true;
+
+  btnClear.disabled = true;
+
+  renderInitial();
 
   let done = 0;
 
+  let results = [];
+
+  async function worker(domain){
+
+    const result =
+      await checkDomain(domain);
+
+    results.push(result);
+
+    updateRow(result);
+
+    done++;
+
+    updateProgress(done, urls.length);
+
+    updateStats(results);
+
+  }
+
+  let index = 0;
+
   async function runner(){
 
-    while(true){
+    while(index < urls.length){
 
-      const current = index++;
+      const current = urls[index++];
 
-      if(current >= items.length){
-        break;
-      }
-
-      results[current] =
-        await worker(items[current]);
-
-      done++;
-
-      onProgress(done, items.length);
+      await worker(current);
 
     }
 
   }
 
-  const workers = Array.from({
+  const runners = [];
 
-    length:Math.min(CONCURRENCY, items.length)
+  for(
+    let i = 0;
+    i < CONCURRENCY;
+    i++
+  ){
+    runners.push(runner());
+  }
 
-  }, () => runner());
+  await Promise.all(runners);
 
-  await Promise.all(workers);
+  /*
+    organiza pelo menor ping
+  */
 
-  return results;
+  results.sort((a,b) => {
 
-}
+    if(a.status === "OFFLINE") return 1;
 
-function render(results){
+    if(b.status === "OFFLINE") return -1;
 
-  const now =
-    new Date().toLocaleString("pt-BR");
+    return a.time - b.time;
 
-  $("results").innerHTML = results.map(r => `
+  });
 
-    <tr>
-
-      <td data-label="Domínio">
-        <span class="domain">
-          ${r.url}
-        </span>
-      </td>
-
-      <td data-label="Status">
-        <span class="${r.className}">
-          ${r.status}
-        </span>
-      </td>
-
-      <td data-label="Protocolo">
-        <span class="protocol">
-          ${r.protocol}
-        </span>
-      </td>
-
-      <td data-label="Tempo">
-        ${
-          Number.isFinite(r.timeMs)
-            ? r.timeMs + " ms"
-            : "-"
-        }
-      </td>
-
-      <td data-label="Verificado">
-        ${now}
-      </td>
-
-    </tr>
-
-  `).join("");
-
-  const online =
-    results.filter(r =>
-      r.status === "ONLINE"
-    ).length;
-
-  $("total").textContent =
-    results.length;
-
-  $("online").textContent =
-    online;
-
-  $("offline").textContent =
-    results.length - online;
-
-  $("lastUpdate").textContent =
-    "Última atualização: " + now;
+  renderSorted(results);
 
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify(results)
   );
 
-}
+  footer.textContent =
+    "Última atualização: " +
+    new Date().toLocaleString("pt-BR");
 
-async function checkAll(){
+  statusText.textContent =
+    "Concluído";
 
-  $("btnCheck").disabled = true;
+  btnCheck.disabled = false;
 
-  $("btnClear").disabled = true;
-
-  $("results").innerHTML = `
-
-    <tr>
-      <td colspan="5">
-        Verificando DNS...
-      </td>
-    </tr>
-
-  `;
-
-  updateProgress(0, urls.length);
-
-  const results = await runPool(
-    urls,
-    checkUrl,
-    updateProgress
-  );
-
-  results.sort((a,b) => {
-
-    if(
-      a.status === "ONLINE" &&
-      b.status !== "ONLINE"
-    ){
-      return -1;
-    }
-
-    if(
-      a.status !== "ONLINE" &&
-      b.status === "ONLINE"
-    ){
-      return 1;
-    }
-
-    return a.timeMs - b.timeMs;
-
-  });
-
-  render(results);
-
-  $("btnCheck").disabled = false;
-
-  $("btnClear").disabled = false;
-
-}
-
-function clearCache(){
-
-  localStorage.removeItem(STORAGE_KEY);
-
-  $("results").innerHTML = "";
-
-  $("progressBar").style.width = "0%";
-
-  $("progressText").textContent =
-    "Cache limpo.";
-
-  $("total").textContent = "0";
-
-  $("online").textContent = "0";
-
-  $("offline").textContent = "0";
-
-  $("lastUpdate").textContent =
-    "Última atualização: -";
+  btnClear.disabled = false;
 
 }
 
 function restoreCache(){
 
-  try{
+  const cache =
+    localStorage.getItem(STORAGE_KEY);
 
-    const cache = JSON.parse(
-      localStorage.getItem(STORAGE_KEY)
-    );
+  if(!cache) return;
 
-    if(cache){
+  const results = JSON.parse(cache);
 
-      render(cache);
+  renderSorted(results);
 
-      updateProgress(
-        cache.length,
-        cache.length
-      );
+  updateStats(results);
 
-    }
+  totalEl.textContent = results.length;
 
-  }catch(e){
+  bar.style.width = "100%";
 
-    console.log(e);
-
-  }
+  statusText.textContent =
+    "Cache carregado";
 
 }
 
-window.addEventListener("load", () => {
+btnCheck.onclick = runChecks;
 
-  restoreCache();
+btnClear.onclick = () => {
 
-  if(!localStorage.getItem(STORAGE_KEY)){
+  localStorage.removeItem(STORAGE_KEY);
 
-    checkAll();
+  tbody.innerHTML = "";
 
-  }
+  totalEl.textContent = "0";
 
-});
+  onlineEl.textContent = "0";
 
-$("btnCheck").addEventListener(
-  "click",
-  checkAll
-);
+  offlineEl.textContent = "0";
 
-$("btnClear").addEventListener(
-  "click",
-  clearCache
-);
+  bar.style.width = "0%";
+
+  statusText.textContent =
+    "Cache limpo";
+
+  footer.textContent =
+    "Última atualização: -";
+
+};
+
+restoreCache();
+
+if(!localStorage.getItem(STORAGE_KEY)){
+
+  runChecks();
+
+}
 
 </script>
 
