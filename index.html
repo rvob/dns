@@ -28,11 +28,11 @@ body{
   background:var(--bg);
   color:var(--text);
   font-family:Consolas,monospace;
-  padding:20px;
+  padding:12px;
 }
 
 .container{
-  max-width:1200px;
+  max-width:1100px;
   margin:auto;
 }
 
@@ -40,23 +40,19 @@ body{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  align-items:center;
-  margin-bottom:15px;
+  margin-bottom:14px;
 }
 
 button{
   border:none;
   background:var(--green);
   color:#fff;
-  padding:10px 16px;
+  padding:11px 15px;
   border-radius:8px;
   cursor:pointer;
   font-weight:bold;
   font-family:inherit;
-}
-
-button:hover{
-  opacity:.9;
+  font-size:.95rem;
 }
 
 button.secondary{
@@ -69,15 +65,28 @@ button:disabled{
 }
 
 .stats{
-  display:flex;
-  gap:20px;
-  flex-wrap:wrap;
-  margin-bottom:15px;
-  color:var(--muted);
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:10px;
+  margin-bottom:14px;
 }
 
-.stats b{
-  color:var(--text);
+.stat{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px;
+}
+
+.stat-label{
+  color:var(--muted);
+  font-size:.8rem;
+}
+
+.stat-value{
+  margin-top:5px;
+  font-size:1.2rem;
+  font-weight:bold;
 }
 
 .progress{
@@ -86,7 +95,7 @@ button:disabled{
   background:#21262d;
   border-radius:999px;
   overflow:hidden;
-  margin-bottom:20px;
+  margin-bottom:15px;
 }
 
 .bar{
@@ -96,34 +105,41 @@ button:disabled{
   transition:.2s;
 }
 
+.status-text{
+  margin-bottom:10px;
+  color:var(--muted);
+  font-size:.9rem;
+}
+
 .table-wrap{
-  overflow:auto;
   border:1px solid var(--border);
   border-radius:10px;
+  overflow:hidden;
 }
 
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:700px;
 }
 
 th{
   background:#161b22;
   color:var(--muted);
-  font-weight:normal;
   text-align:left;
-  padding:14px;
+  padding:12px;
+  font-weight:normal;
+  font-size:.9rem;
   border-bottom:1px solid var(--border);
 }
 
 td{
-  padding:12px 14px;
+  padding:12px;
   border-bottom:1px solid #21262d;
+  font-size:.92rem;
 }
 
-tr:hover{
-  background:#161b22;
+tr:last-child td{
+  border-bottom:none;
 }
 
 .online{
@@ -145,15 +161,79 @@ tr:hover{
 }
 
 .footer{
-  margin-top:15px;
+  margin-top:12px;
   color:var(--muted);
-  font-size:.9rem;
+  font-size:.85rem;
 }
 
-@media(max-width:768px){
+/* MOBILE */
+
+@media(max-width:700px){
 
   body{
-    padding:10px;
+    padding:8px;
+  }
+
+  .topbar{
+    flex-direction:column;
+  }
+
+  button{
+    width:100%;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
+  td{
+    display:block;
+    width:100%;
+  }
+
+  thead{
+    display:none;
+  }
+
+  tbody{
+    display:grid;
+    gap:10px;
+  }
+
+  tr{
+    background:var(--panel);
+    border-bottom:none;
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+  }
+
+  td{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    border-bottom:1px solid #21262d;
+  }
+
+  td:last-child{
+    border-bottom:none;
+  }
+
+  td::before{
+    font-weight:bold;
+    color:var(--muted);
+  }
+
+  td:nth-child(1)::before{
+    content:"Domínio";
+  }
+
+  td:nth-child(2)::before{
+    content:"Status";
+  }
+
+  td:nth-child(3)::before{
+    content:"Tempo";
   }
 
 }
@@ -178,14 +258,25 @@ tr:hover{
 
   <div class="stats">
 
-    <div>Total: <b id="total">0</b></div>
+    <div class="stat">
+      <div class="stat-label">TOTAL</div>
+      <div class="stat-value" id="total">0</div>
+    </div>
 
-    <div>Online: <b id="online">0</b></div>
+    <div class="stat">
+      <div class="stat-label">ONLINE</div>
+      <div class="stat-value" id="online">0</div>
+    </div>
 
-    <div>Offline: <b id="offline">0</b></div>
+    <div class="stat">
+      <div class="stat-label">OFFLINE</div>
+      <div class="stat-value" id="offline">0</div>
+    </div>
 
-    <div id="statusText">Aguardando...</div>
+  </div>
 
+  <div class="status-text" id="statusText">
+    Aguardando...
   </div>
 
   <div class="progress">
@@ -238,7 +329,7 @@ const TIMEOUT = 6000;
 
 const CONCURRENCY = 5;
 
-const STORAGE_KEY = "monitor_lite_pro_v3";
+const STORAGE_KEY = "monitor_lite_mobile_v1";
 
 const tbody = document.getElementById("tbody");
 
@@ -362,11 +453,6 @@ function testSite(domain){
 
       clearTimeout(timeout);
 
-      /*
-        erro significa:
-        servidor respondeu
-      */
-
       resolve({
 
         online:true,
@@ -417,42 +503,6 @@ async function checkDomain(domain){
     time:"-"
 
   };
-
-}
-
-function updateRow(result){
-
-  const row =
-    document.getElementById(
-      "row-" +
-      result.domain.replace("http://","")
-    );
-
-  if(!row) return;
-
-  row.innerHTML = `
-
-    <td class="domain">
-      ${result.domain}
-    </td>
-
-    <td class="${
-      result.status === "ONLINE"
-      ? "online"
-      : "offline"
-    }">
-      ${result.status}
-    </td>
-
-    <td>
-      ${
-        result.time === "-"
-        ? "-"
-        : result.time + " ms"
-      }
-    </td>
-
-  `;
 
 }
 
@@ -513,8 +563,6 @@ async function runChecks(){
 
     results.push(result);
 
-    updateRow(result);
-
     done++;
 
     updateProgress(done, urls.length);
@@ -539,19 +587,13 @@ async function runChecks(){
 
   const runners = [];
 
-  for(
-    let i = 0;
-    i < CONCURRENCY;
-    i++
-  ){
+  for(let i = 0; i < CONCURRENCY; i++){
+
     runners.push(runner());
+
   }
 
   await Promise.all(runners);
-
-  /*
-    organiza pelo menor ping
-  */
 
   results.sort((a,b) => {
 
